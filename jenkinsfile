@@ -8,8 +8,7 @@ pipeline {
             defaultValue: 'DEV',
             name: 'GIT_Branch_Tag',
             type: 'BRANCH',
-            remoteURL: 'https://your.git.repo/url.git',
-            credentialsId: 'your-credentials-id'
+            remoteURL: 'https://github.com/shinrah/JenkinsPipelineDemoProject.git',
         )
     }
 
