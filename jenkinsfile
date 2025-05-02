@@ -8,7 +8,20 @@ pipeline {
             defaultValue: 'DEV',
             name: 'GIT_Branch_Tag',
             type: 'BRANCH',
-            remoteURL: 'https://github.com/shinrah/JenkinsPipelineDemoProject.git',
+            remoteURL: 'https://your.git.repo/url.git',
+            credentialsId: 'your-credentials-id'
         )
+    }
+
+    stages {
+        stage ('print env and mode') {
+            steps {
+                script {
+                    env.Host = sh(returnStdout: true, script: "echo ${params.host}").trim()
+                    env.Mode = sh(returnStdout: true, script: "echo ${params.mode}").trim()
+                    env.Deployment_Method = sh(returnStdout: true, script: "echo ${params.Deployment_Method}").trim()
+                }
+            }
+        }
     }
 }
