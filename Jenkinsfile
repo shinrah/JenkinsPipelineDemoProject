@@ -3,9 +3,9 @@ pipeline {
 
     parameters {
         choice choices: ['Deploy', 'stop', 'start', 'restart'], description: 'choose mode for deployment or starting the application server', name: 'mode'
-        choice choices: ['DEV', 'IT', 'UAT'], description: 'choose environment to deploy master', name: 'host'
+        choice choices: ['DEV', 'master', 'UAT'], description: 'choose environment to deploy master', name: 'host'
         listbranches(
-            defaultValue: 'DEV',
+            defaultValue: 'master',
             name: 'GIT_Branch_Tag',
             type: 'BRANCH',
             remoteURL: 'https://github.com/shinrah/JenkinsPipelineDemoProject.git',
