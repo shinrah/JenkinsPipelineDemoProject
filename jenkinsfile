@@ -1,33 +1,14 @@
-pipeline{
-agent any
-stages 
-{
-stage('Build') 
-{
-steps{
-echo "Building the Code.........."
-sh "mvn clean"
-}
-}
-stage('Test') 
-{
-steps{
-echo "Testing the Code.........."
-sh "mvn test"
-}
-}
-stage('Compile') 
-{
-steps{
-echo "Compiling the Project.........."
-sh "mvn compile"
-}
-}
-stage('Deploy') 
-{
-steps{
-echo "Deploying the Project.........."
-}
-}
-}
+pipeline {
+    agent any
+
+    parameters {
+        choice choices: ['Deploy', 'stop', 'start', 'restart'], description: 'choose mode for deployment or starting the application server', name: 'mode'
+        choice choices: ['DEV', 'IT', 'UAT'], description: 'choose environment to deploy master', name: 'host'
+        listbranches(
+            defaultValue: 'DEV',
+            name: 'GIT_Branch_Tag',
+            type: 'BRANCH',
+            remoteURL: 'https://github.com/shinrah/JenkinsPipelineDemoProject.git',
+        )
+    }
 }
