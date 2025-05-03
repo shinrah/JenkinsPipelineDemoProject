@@ -18,15 +18,13 @@ pipeline {
                     env.Host = sh(returnStdout: true, script: "echo ${params.host}").trim()
                     env.Mode = sh(returnStdout: true, script: "echo ${params.mode}").trim()
                     env.Deployment_Method = sh(returnStdout: true, script: "echo ${params.mode}").trim()
-                    env.GitBranch = params.GIT_Branch_Tag // Save the selected branch to an environment variable
+                    env.GitBranch = params.GIT_Branch_Tag
                 }
             }
         }
 
-        // Add more stages as needed, using the selected Git branch
         stage('Checkout Git Branch') {
             steps {
-                // Checkout the selected branch
                 git branch: "${env.GitBranch}", url: 'https://github.com/shinrah/JenkinsPipelineDemoProject.git'
             }
         }
@@ -43,12 +41,46 @@ pipeline {
                         def environment = "${params.host}"
                         def giturl = 'https://github.com/shinrah/JenkinsPipelineDemoProject.git'
                         def gitBranch = "${params.GIT_Branch_Tag}"
-                        def artifactServer = Artifactory.server 'Devopsartifactoryserver'
+                        def artifactServer = Artifactory.server('Devopsartifactoryserver')
                         def artifactbuildinfo = Artifactory.newBuildInfo()
                         def artifactbuildMaven = Artifactory.newMavenBuild()
                         def citoolpath = "${env.CITOOL_PATH}"
                         def devopssonarprops = readProperties file: "${citoolpath}/sonar.properties"
                         artifactbuildMaven.tool = 'MVN111'
+                    }
+                }
+            }
+        }
+
+        stage('Clean up') {
+            steps {
+                script {
+                    cleanWs()
+                    def gitBranch = "${params.GIT_Branch_Tag}"
+                    if (gitBranch != "") {
+                        def formattedGitBranch = getGitBranchName(gitBranch)
+                        echo "Formatted GIT branch tag is ${formattedGitBranch}"
+                    }
+                }
+            }
+        }
+
+        stage('Prepration') {
+            steps {
+                echo 'Checkout Code from Source Code Repository'
+                script {
+                    def gitBranch = "${params.GIT_Branch_Tag}"
+                    def giturl = 'https://github.com/shinrah/JenkinsPipelineDemoProject.git'
+                    if (gitBranch != "") {
+                        def formattedGitBranch = getGitBranchName(gitBranch)
+                        checkout([
+                            $class: 'GitSCM',
+                            branches: [[name: "${formattedGitBranch}"]],
+                            doGenerateSubmoduleConfigurations: false,
+                            extensions: [],
+                            submoduleCfg: [],
+                            userRemoteConfigs: [[url: "${giturl}"]]
+                        ])
                     }
                 }
             }
