@@ -63,8 +63,10 @@ pipeline {
                     }
                 }
             }
+        }
 
-            stage('Prepration') {
+        stage('Prepration') {
+            steps {
                 echo 'Checkout Code from Source Code Repository'
                 script {
                     if ("${gitBranch}" != "") {
@@ -73,8 +75,10 @@ pipeline {
                     }
                 }
             }
+        }
 
-            stage('Building SIF JAVA') {
+        stage('Building SIF JAVA') {
+            steps {
                 withCredentials([string(credentialsId: 'sonar-token', variable: 'sonartoken')]) {
                     echo 'Executing SIF JAVA Build'
                     artifactbuildMaven.opts = "-Dsonar.host.url=\"${devopssonarprops.sonar_url}\""
