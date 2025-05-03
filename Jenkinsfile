@@ -63,25 +63,22 @@ pipeline {
                     }
                 }
             }
-        }
 
-        stage('Prepration') {
-            steps {
+            stage('Prepration') {
                 echo 'Checkout Code from Source Code Repository'
                 script {
-                    def gitBranch = "${params.GIT_Branch_Tag}"
-                    def giturl = 'https://github.com/shinrah/JenkinsPipelineDemoProject.git'
-                    if (gitBranch != "") {
+                    if ("${gitBranch}" != "") {
                         def formattedGitBranch = getGitBranchName(gitBranch)
-                        checkout([
-                            $class: 'GitSCM',
-                            branches: [[name: "${formattedGitBranch}"]],
-                            doGenerateSubmoduleConfigurations: false,
-                            extensions: [],
-                            submoduleCfg: [],
-                            userRemoteConfigs: [[url: "${giturl}"]]
-                        ])
+                        checkout([$class: 'GitSCM', branches: [[name: "${formattedGitBranch}"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], useRemoteConfig: true, url: "$giturl"])
                     }
+                }
+            }
+
+            stage('Building SIF JAVA') {
+                withCredentials([string(credentialsId: 'sonar-token', variable: 'sonartoken')]) {
+                    echo 'Executing SIF JAVA Build'
+                    artifactbuildMaven.opts = "-Dsonar.host.url=\"${devopssonarprops.sonar_url}\""
+                    artifactbuildMaven.run pom: 'Java/SproutService/pom.xml', goals: 'clean install -Dmaven.test.failure.ignore=true sonar:sonar -Dsonar.projectKey=SIF -U -Dsonar.host.url=${SONAR_URL} -Dsonar.login=${sonartoken}', buildinfo: artifactbuildinfo
                 }
             }
         }
