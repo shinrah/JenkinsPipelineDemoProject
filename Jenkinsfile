@@ -81,8 +81,14 @@ pipeline {
             steps {
                 withCredentials([string(credentialsId: 'sonar-token', variable: 'sonartoken')]) {
                     echo 'Executing SIF JAVA Build'
-                    artifactbuildMaven.opts = "-Dsonar.host.url=\"${devopssonarprops.sonar_url}\""
-                    artifactbuildMaven.run pom: 'Java/SproutService/pom.xml', goals: 'clean install -Dmaven.test.failure.ignore=true sonar:sonar -Dsonar.projectKey=SIF -U -Dsonar.host.url=${SONAR_URL} -Dsonar.login=${sonartoken}', buildinfo: artifactbuildinfo
+                    script {
+                        artifactbuildMaven.opts = "-Dsonar.host.url=\"${devopssonarprops.sonar_url}\""
+                        artifactbuildMaven.run(
+                            pomFile: 'Java/SproutService/pom.xml',
+                            goals: 'clean install -Dmaven.test.failure.ignore=true sonar:sonar -Dsonar.projectKey=SIF -U -Dsonar.host.url=${SONAR_URL} -Dsonar.login=${sonartoken}',
+                            buildInfo: artifactbuildinfo
+                        )
+                    }
                 }
             }
         }
