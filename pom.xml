@@ -2,43 +2,48 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <!-- Parent project information -->
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.example</groupId>
-    <artifactId>JenkinsPipelineDemoProject</artifactId>
+    <artifactId>JenkinsPipelineDemoPrjoject</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
+    <name>JenkinsPipelineDemoPrjoject</name>
+    <url>http://maven.apache.org</url>
+
+    <!-- Properties for managing versions of Java and Maven -->
     <properties>
-        <!-- Set Java version to 17 -->
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-        <maven.compiler.release>17</maven.compiler.release> <!-- Optional: this is for JDK 9+ -->
+        <java.version>17</java.version> <!-- Ensure Java 17 is used -->
     </properties>
 
+    <!-- Dependencies for the project -->
     <dependencies>
-        <!-- Add your dependencies here -->
-        <!-- Example -->
+        <!-- Example dependency -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
-            <version>2.5.6</version>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.12.0</version>
         </dependency>
+
+        <!-- Add any other dependencies your project requires -->
     </dependencies>
 
+    <!-- Build section -->
     <build>
         <plugins>
-            <!-- Maven Compiler Plugin to set Java version to 17 -->
+            <!-- Maven Compiler Plugin for Java 17 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
                 <configuration>
-                    <source>17</source>
-                    <target>17</target>
+                    <source>${java.version}</source> <!-- Use Java 17 for source -->
+                    <target>${java.version}</target> <!-- Use Java 17 for target -->
                 </configuration>
             </plugin>
-        </plugins>
-    </build>
 
-</project>
+            <!-- Optional: If you want to build JAR or WAR files -->
+            <plugin
