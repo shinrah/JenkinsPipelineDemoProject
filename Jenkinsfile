@@ -1,43 +1,43 @@
 pipeline {
     agent any
 
-    environment {
-        giurl = 'https://github.com/shinrah/JenkinsPipelineDemoProject.git'
-        gitBranch = "${params.GIT_Branch_Tag}"
-        formattedGitBranch = "${params.GIT_Branch_Tag}" // Adjust if formatting is needed
+    parameters {
+        choice(name: 'mode', choices: ['Deploy', 'stop', 'start', 'restart'], description: 'Choose mode for deployment or starting the application server')
+        choice(name: 'host', choices: ['DEV', 'master', 'UAT'], description: 'Choose environment to deploy')
+        choice(name: 'GIT_Branch_Tag', choices: ['DEV', 'master', 'feature-branch', 'UAT'], description: 'Select Git branch to deploy')
     }
 
-    parameters {
-        choice choices: ['Deploy', 'stop', 'start', 'restart'], name: 'mode', description: 'Choose mode for deployment or starting the application server'
-        choice choices: ['DEV', 'master', 'UAT'], name: 'host', description: 'Choose environment to deploy master'
-        choice choices: ['DEV', 'master', 'feature-branch', 'UAT'], name: 'GIT_Branch_Tag', description: 'Select Git branch to deploy'
+    environment {
+        GIT_REPO_URL = 'https://github.com/shinrah/JenkinsPipelineDemoProject.git'
     }
 
     stages {
         stage('Print environment and mode') {
             steps {
                 script {
-                    env.Host = sh(returnStdout: true, script: "echo ${params.host}").trim()
-                    env.Mode = sh(returnStdout: true, script: "echo ${params.mode}").trim()
-                    env.Deployment_Method = sh(returnStdout: true, script: "echo ${params.mode}").trim()
+                    env.Host = params.host
+                    env.Mode = params.mode
+                    env.Deployment_Method = params.mode
                     env.GitBranch = params.GIT_Branch_Tag
+                    echo "Mode: ${env.Mode}, Host: ${env.Host}, Git Branch: ${env.GitBranch}"
                 }
             }
         }
 
         stage('Checkout Git Branch') {
             steps {
-                git branch: "${env.GitBranch}", url: "${env.giurl}"
+                git branch: "${params.GIT_Branch_Tag}", url: "${env.GIT_REPO_URL}"
             }
         }
 
         stage("Build Artifacts") {
+            when {
+                expression { return params.mode == "Deploy" }
+            }
             steps {
                 script {
-                    if (params.mode == "Deploy") {
-                        currentBuild.displayName = "${params.host}_${params.mode}_${BUILD_NUMBER}"
-                        echo "Ready to build for ${params.host} from branch ${params.GIT_Branch_Tag}"
-                    }
+                    currentBuild.displayName = "${params.host}_${params.mode}_${BUILD_NUMBER}"
+                    echo "Ready to build for ${params.host} from branch ${params.GIT_Branch_Tag}"
                 }
             }
         }
@@ -46,7 +46,7 @@ pipeline {
             steps {
                 script {
                     cleanWs()
-                    echo "Formatted GIT branch tag is ${formattedGitBranch}"
+                    echo "Formatted GIT branch tag is ${params.GIT_Branch_Tag}"
                 }
             }
         }
@@ -55,21 +55,25 @@ pipeline {
             steps {
                 script {
                     echo 'Checkout code from source code repository'
-                    if ("${gitBranch}" != "") {
-                        checkout([
-                            $class: 'GitSCM',
-                            branches: [[name: "${formattedGitBranch}"]],
-                            doGenerateSubmoduleConfigurations: false,
-                            extensions: [],
-                            submoduleCfg: [],
-                            userRemoteConfigs: [[url: "${giurl}"]]
-                        ])
-                    }
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: [[name: "${params.GIT_Branch_Tag}"]],
+                        doGenerateSubmoduleConfigurations: false,
+                        extensions: [],
+                        submoduleCfg: [],
+                        userRemoteConfigs: [[url: "${env.GIT_REPO_URL}"]]
+                    ])
                 }
+            }
+        }
 
-                stage('building Scope JAVA'){
-                    echo 'Exucuting scope JAVA Build'
-                    artifactsbuildMaven.run pom: 'pom.xml', goals: 'clean install'
+        stage('Building Scope JAVA') {
+            steps {
+                script {
+                    def artifactsbuildMaven = Artifactory.newMavenBuild()
+                    def artifactsbuildinfo = Artifactory.newBuildInfo()
+                    artifactsbuildMaven.tool = 'MVN111'
+                    artifactsbuildMaven.run pom: 'pom.xml', goals: 'clean install', buildInfo: artifactsbuildinfo
                 }
             }
         }
