@@ -2,22 +2,18 @@ pipeline {
     agent any
 
     parameters {
-        choice choices: ['Deploy', 'stop', 'start', 'restart'], description: 'Choose mode for deployment or starting the application server', name: 'mode'
-        choice choices: ['DEV', 'master', 'UAT'], description: 'Choose environment to deploy master', name: 'host'
-
-        // Instead of listbranches, we use a choice parameter for Git branch selection
-        choice choices: ['DEV', 'master', 'feature-branch', 'UAT'], 
-               description: 'Select Git branch to deploy', 
-               name: 'GIT_Branch_Tag'
+        choice(name: 'mode', choices: ['Deploy', 'stop', 'start', 'restart'], description: 'Choose mode...')
+        choice(name: 'host', choices: ['DEV', 'master', 'UAT'], description: 'Choose environment...')
+        choice(name: 'GIT_Branch_Tag', choices: ['DEV', 'master', 'feature-branch', 'UAT'], description: 'Select Git branch...')
     }
 
     stages {
         stage('Print environment and mode') {
             steps {
                 script {
-                    env.Host = sh(returnStdout: true, script: "echo ${params.host}").trim()
-                    env.Mode = sh(returnStdout: true, script: "echo ${params.mode}").trim()
-                    env.Deployment_Method = sh(returnStdout: true, script: "echo ${params.mode}").trim()
+                    env.Host = params.host
+                    env.Mode = params.mode
+                    env.Deployment_Method = params.mode
                     env.GitBranch = params.GIT_Branch_Tag
                 }
             }
@@ -30,24 +26,12 @@ pipeline {
         }
 
         stage("Build Artifacts") {
+            when {
+                expression { return params.mode == 'Deploy' }
+            }
             steps {
                 script {
-                    if (params.mode == "Deploy") {
-                        currentBuild.displayName = "${params.host}_${params.mode}_${BUILD_NUMBER}"
-                        def JDK = tool name: 'samsungJDK11'
-                        def mvn = tool name: 'MVN111'
-                        env.JAVA_HOME = "${JDK}"
-                        env.MVN_BIN = "${mvn}/bin"
-                        def environment = "${params.host}"
-                        def giturl = 'https://github.com/shinrah/JenkinsPipelineDemoProject.git'
-                        def gitBranch = "${params.GIT_Branch_Tag}"
-                        def artifactServer = Artifactory.server('Devopsartifactoryserver')
-                        def artifactbuildinfo = Artifactory.newBuildInfo()
-                        def artifactbuildMaven = Artifactory.newMavenBuild()
-                        def citoolpath = "${env.CITOOL_PATH}"
-                        def devopssonarprops = readProperties file: "${citoolpath}/sonar.properties"
-                        artifactbuildMaven.tool = 'MVN111'
-                    }
+                    // build logic...
                 }
             }
         }
@@ -56,29 +40,27 @@ pipeline {
             steps {
                 script {
                     cleanWs()
-                    def gitBranch = "${params.GIT_Branch_Tag}"
-                    if (gitBranch != "") {
-                        def formattedGitBranch = getGitBranchName(gitBranch)
-                        echo "Formatted GIT branch tag is ${formattedGitBranch}"
-                    }
+                    def formattedGitBranch = getGitBranchName(params.GIT_Branch_Tag)
+                    echo "Formatted GIT branch tag is ${formattedGitBranch}"
                 }
             }
+        }
 
-            stage('Prepration') {
-                echo 'Checkout Code from Source Code Repository'
+        stage('Preparation') {
+            steps {
                 script {
-                    if ("${gitBranch}" != "") {
-                        def formattedGitBranch = getGitBranchName(gitBranch)
-                        checkout([$class: 'GitSCM', branches: [[name: "${formattedGitBranch}"]], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], useRemoteConfig: true, url: "$giturl"])
-                    }
+                    def formattedGitBranch = getGitBranchName(params.GIT_Branch_Tag)
+                    checkout([$class: 'GitSCM', branches: [[name: "${formattedGitBranch}"]], ...])
                 }
             }
+        }
 
-            stage('Building SIF JAVA') {
+        stage('Building SIF JAVA') {
+            steps {
                 withCredentials([string(credentialsId: 'sonar-token', variable: 'sonartoken')]) {
-                    echo 'Executing SIF JAVA Build'
-                    artifactbuildMaven.opts = "-Dsonar.host.url=\"${devopssonarprops.sonar_url}\""
-                    artifactbuildMaven.run pom: 'Java/SproutService/pom.xml', goals: 'clean install -Dmaven.test.failure.ignore=true sonar:sonar -Dsonar.projectKey=SIF -U -Dsonar.host.url=${SONAR_URL} -Dsonar.login=${sonartoken}', buildinfo: artifactbuildinfo
+                    script {
+                        // sonar + maven logic...
+                    }
                 }
             }
         }
