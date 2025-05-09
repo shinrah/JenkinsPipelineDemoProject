@@ -30,7 +30,7 @@ pipeline {
             }
         }
 
-        stage("Build Artifacts") {
+        stage('Build Artifacts') {
             when {
                 expression { return params.mode == "Deploy" }
             }
@@ -46,7 +46,7 @@ pipeline {
             steps {
                 script {
                     cleanWs()
-                    echo "Formatted GIT branch tag is ${params.GIT_Branch_Tag}"
+                    echo "Cleaned workspace. Branch used: ${params.GIT_Branch_Tag}"
                 }
             }
         }
@@ -54,7 +54,7 @@ pipeline {
         stage('Preparation') {
             steps {
                 script {
-                    echo 'Checkout code from source code repository'
+                    echo 'Checking out code again (if needed)'
                     checkout([
                         $class: 'GitSCM',
                         branches: [[name: "${params.GIT_Branch_Tag}"]],
@@ -69,12 +69,7 @@ pipeline {
 
         stage('Building Scope JAVA') {
             steps {
-                script {
-                    def artifactsbuildMaven = Artifactory.newMavenBuild()
-                    def artifactsbuildinfo = Artifactory.newBuildInfo()
-                    artifactsbuildMaven.tool = 'MVN111'
-                    artifactsbuildMaven.run pom: 'pom.xml', goals: 'clean install', buildInfo: artifactsbuildinfo
-                }
+                sh 'mvn clean install'
             }
         }
     }
